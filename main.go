@@ -100,12 +100,12 @@ func (h *logHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 type moduleLogHandler struct {
-	Records []slog.Record
+	Records []*slog.Record
 }
 
 func (h *moduleLogHandler) Handle(ctx context.Context, r slog.Record) error {
 	handlerInstance.consoleHandler.Handle(ctx, r)
-	h.Records = append(h.Records, r)
+	h.Records = append(h.Records, &r)
 	return nil
 }
 
@@ -121,7 +121,7 @@ func (h *moduleLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return true
 }
 
-func GetAttrValue(record slog.Record, key string) string {
+func GetAttrValue(record *slog.Record, key string) string {
 	var value string
 	record.Attrs(func(attr slog.Attr) bool {
 		if attr.Key == key {
