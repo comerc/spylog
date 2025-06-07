@@ -3,10 +3,7 @@ package spylog
 import (
 	"bytes"
 	"context"
-	"flag"
-	"io"
 	"log/slog"
-	"os"
 	"runtime"
 	"strconv"
 	"sync"
@@ -19,24 +16,27 @@ var (
 	handlerOnce     sync.Once
 )
 
+func Init(handler slog.Handler) {
+	handlerOnce.Do(func() {
+		// w := io.Discard // mute all logs
+		// if flag.Lookup("test.v") != nil {
+		// 	w = os.Stdout
+		// }
+		handlerInstance = &logHandler{
+			handlers: make(map[string]map[string]*moduleLogHandler),
+			handler:  handler, // slog.NewTextHandler(w, nil),
+		}
+	})
+}
+
 type logHandler struct {
-	mu             sync.Mutex
-	current        sync.Map
-	handlers       map[string]map[string]*moduleLogHandler
-	consoleHandler slog.Handler
+	mu       sync.Mutex
+	current  sync.Map
+	handlers map[string]map[string]*moduleLogHandler
+	handler  slog.Handler
 }
 
 func GetModuleLogHandler(moduleName, testName string, init func()) *moduleLogHandler {
-	handlerOnce.Do(func() {
-		w := io.Discard // mute all logs
-		if flag.Lookup("test.v") != nil {
-			w = os.Stdout
-		}
-		handlerInstance = &logHandler{
-			handlers:       make(map[string]map[string]*moduleLogHandler),
-			consoleHandler: slog.NewTextHandler(w, nil),
-		}
-	})
 	h := handlerInstance
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -57,7 +57,7 @@ func GetModuleLogHandler(moduleName, testName string, init func()) *moduleLogHan
 }
 
 func (h *logHandler) Handle(ctx context.Context, r slog.Record) error {
-	h.consoleHandler.Handle(ctx, r)
+	h.handler.Handle(ctx, r)
 	return nil
 }
 
@@ -104,7 +104,7 @@ type moduleLogHandler struct {
 }
 
 func (h *moduleLogHandler) Handle(ctx context.Context, r slog.Record) error {
-	handlerInstance.consoleHandler.Handle(ctx, r)
+	handlerInstance.handler.Handle(ctx, r)
 	h.Records = append(h.Records, &r)
 	return nil
 }

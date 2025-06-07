@@ -1,12 +1,24 @@
 package spylog
 
 import (
+	"flag"
+	"io"
 	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	w := io.Discard // mute all logs
+	if flag.Lookup("test.v") != nil {
+		w = os.Stdout
+	}
+	Init(slog.NewTextHandler(w, nil))
+	os.Exit(m.Run())
+}
 
 type SomeObject struct {
 	log *slog.Logger
