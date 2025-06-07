@@ -96,7 +96,7 @@ func (h *logHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *logHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return true
+	return h.handler.Enabled(ctx, level)
 }
 
 type moduleLogHandler struct {
@@ -118,7 +118,7 @@ func (h *moduleLogHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *moduleLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return true
+	return handlerInstance.handler.Enabled(ctx, level)
 }
 
 func GetAttrValue(record *slog.Record, key string) string {
