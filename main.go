@@ -16,7 +16,7 @@ var (
 	handlerOnce     sync.Once
 )
 
-func Init(handler slog.Handler) {
+func Init(logger *slog.Logger) {
 	handlerOnce.Do(func() {
 		// w := io.Discard // mute all logs
 		// if flag.Lookup("test.v") != nil {
@@ -24,7 +24,7 @@ func Init(handler slog.Handler) {
 		// }
 		handlerInstance = &logHandler{
 			handlers: make(map[string]map[string]*moduleLogHandler),
-			handler:  handler, // slog.NewTextHandler(w, nil),
+			handler:  logger.Handler(), // slog.NewTextHandler(w, nil),
 		}
 	})
 }
@@ -96,7 +96,7 @@ func (h *logHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *logHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return h.handler.Enabled(ctx, level)
+	return true
 }
 
 type moduleLogHandler struct {
@@ -118,10 +118,7 @@ func (h *moduleLogHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *moduleLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	hi := handlerInstance
-	hi.mu.Lock()
-	defer hi.mu.Unlock()
-	return hi.Enabled(ctx, level)
+	return true
 }
 
 func GetAttrValue(record *slog.Record, key string) string {

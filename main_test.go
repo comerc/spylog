@@ -16,7 +16,9 @@ func TestMain(m *testing.M) {
 	if flag.Lookup("test.v") != nil {
 		w = os.Stdout
 	}
-	Init(slog.NewTextHandler(w, nil))
+	handler := slog.NewTextHandler(w, nil)
+	logger := slog.New(handler)
+	Init(logger)
 	os.Exit(m.Run())
 }
 
