@@ -23,7 +23,7 @@ func Init(logger *slog.Logger) {
 		// 	w = os.Stdout
 		// }
 		handlerInstance = &logHandler{
-			handlers: make(map[string]map[string]*moduleLogHandler),
+			handlers: make(map[string]map[string]*ModuleLogHandler),
 			handler:  logger.Handler(), // slog.NewTextHandler(w, nil),
 		}
 	})
@@ -32,23 +32,23 @@ func Init(logger *slog.Logger) {
 type logHandler struct {
 	mu       sync.Mutex
 	current  sync.Map
-	handlers map[string]map[string]*moduleLogHandler
+	handlers map[string]map[string]*ModuleLogHandler
 	handler  slog.Handler
 }
 
-func GetModuleLogHandler(moduleName, testName string, init func()) *moduleLogHandler {
+func GetModuleLogHandler(moduleName, testName string, init func()) *ModuleLogHandler {
 	h := handlerInstance
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.current.Store(getGID(), testName) // need for WithAttrs
 	handlers, ok := h.handlers[moduleName]
 	if !ok {
-		handlers = make(map[string]*moduleLogHandler)
+		handlers = make(map[string]*ModuleLogHandler)
 		h.handlers[moduleName] = handlers
 	}
 	handler, ok := handlers[testName]
 	if !ok {
-		handler = &moduleLogHandler{}
+		handler = &ModuleLogHandler{}
 		h.handlers[moduleName][testName] = handler
 	}
 	slog.SetDefault(slog.New(h))
@@ -99,25 +99,29 @@ func (h *logHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.handler.Enabled(ctx, level)
 }
 
-type moduleLogHandler struct {
-	Records []*slog.Record
+type ModuleLogHandler struct {
+	records []*slog.Record
 }
 
-func (h *moduleLogHandler) Handle(ctx context.Context, r slog.Record) error {
+func (h *ModuleLogHandler) GetRecords() []*slog.Record {
+	return h.records
+}
+
+func (h *ModuleLogHandler) Handle(ctx context.Context, r slog.Record) error {
 	handlerInstance.handler.Handle(ctx, r)
-	h.Records = append(h.Records, &r)
+	h.records = append(h.records, &r)
 	return nil
 }
 
-func (h *moduleLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+func (h *ModuleLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return h
 }
 
-func (h *moduleLogHandler) WithGroup(name string) slog.Handler {
+func (h *ModuleLogHandler) WithGroup(name string) slog.Handler {
 	return h
 }
 
-func (h *moduleLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *ModuleLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return handlerInstance.handler.Enabled(ctx, level)
 }
 

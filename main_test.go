@@ -47,8 +47,8 @@ func TestSomeMethod(t *testing.T) {
 
 	slog.Info("test message from default") // not captured
 
-	require.True(t, len(logHandler.Records) == 1)
-	r0 := logHandler.Records[0]
+	require.True(t, len(logHandler.records) == 1)
+	r0 := logHandler.records[0]
 
 	assert.Equal(t, "test message from some method", r0.Message)
 	assert.Equal(t, "attr_val", GetAttrValue(r0, "attr_key"))
